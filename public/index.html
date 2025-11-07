@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebSocket Chat</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      background: #1f2937;
+      color: white;
+      padding: 10px;
+      text-align: center;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      background: #f3f4f6;
+    }
+    .msg {
+      background: #fff;
+      margin-bottom: 8px;
+      padding: 8px;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .meta {
+      font-size: 12px;
+      color: gray;
+    }
+    #inputRow {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #ddd;
+    }
+    #textInput {
+      flex: 1;
+      padding: 8px;
+    }
+    #sendBtn {
+      padding: 8px 12px;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>WebSocket Chat</h2>
+  </header>
+
+  <main>
+    <div id="messages"></div>
+    <div id="inputRow">
+      <input id="nameInput" type="text" placeholder="Your name" />
+      <input id="textInput" type="text" placeholder="Type a message..." />
+      <button id="sendBtn">Send</button>
+    </div>
+  </main>
+
+  <script>
+    const statusEl = document.createElement('div');
+    statusEl.textContent = 'Connecting...';
+    document.body.insertBefore(statusEl, document.body.firstChild);
+
+    const messagesEl = document.getElementById('messages');
+    const nameInput = document.getElementById('nameInput');
+    const textInput = document.getElementById('textInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+    const ws = new WebSocket(`${protocol}://${location.host}`);
+
+    ws.addEventListener('open', () => {
+      statusEl.textContent = 'Connected ✅';
+      const name = nameInput.value.trim() || 'Anonymous';
+      ws.send(JSON.stringify({ type: 'join', name }));
+    });
+
+    ws.addEventListener('message', (ev) => {
+      try {
+        const data = JSON.parse(ev.data);
+        if (data.type === 'message') {
+          appendMessage(`${data.name}: ${data.text}`, new Date(data.time));
+        } else if (data.type === 'system') {
+          appendMessage(`* ${data.text} *`, new Date(data.time), true);
+        }
+      } catch (e) {}
+    });
+
+    ws.addEventListener('close', () => {
+      statusEl.textContent = 'Disconnected ❌';
+    });
+
+    sendBtn.addEventListener('click', sendMessage);
+    textInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    function sendMessage() {
+      const name = nameInput.value.trim() || 'Anonymous';
+      const text = textInput.value.trim();
+      if (!text) return;
+      ws.send(JSON.stringify({ type: 'message', name, text }));
+      appendMessage(`${name} (you): ${text}`, new Date());
+      textInput.value = '';
+    }
+
+    function appendMessage(text, time, system = false) {
+      const el = document.createElement('div');
+      el.className = 'msg';
+      const ts = time.toLocaleTimeString();
+      el.innerHTML = `<div class="meta">${ts}</div><div>${text}</div>`;
+      if (system) el.style.fontStyle = 'italic';
+      messagesEl.appendChild(el);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+  </script>
+</body>
+</html>
