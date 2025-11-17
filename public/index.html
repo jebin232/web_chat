@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WebSocket Chat ✅↩️</title>
+
   <style>
   body {
     margin: 0;
@@ -15,6 +16,7 @@
     color: #e5e7eb;
   }
 
+  /* ⭐ STICKY HEADER */
   header {
     background: #1e293b;
     color: #f8fafc;
@@ -22,8 +24,12 @@
     text-align: center;
     font-weight: bold;
     box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    position: sticky;
+    top: 0;
+    z-index: 999;
   }
 
+  /* ⭐ STICKY STATUS BAR */
   #statusBar {
     font-size: 14px;
     display: flex;
@@ -33,6 +39,9 @@
     background: #111827;
     padding: 6px 0;
     color: #cbd5e1;
+    position: sticky;
+    top: 52px; /* keeps it below the header */
+    z-index: 998;
   }
 
   .dot {
@@ -42,13 +51,8 @@
     display: inline-block;
   }
 
-  .dot.connected {
-    background: #22c55e;
-  }
-
-  .dot.disconnected {
-    background: #ef4444;
-  }
+  .dot.connected { background: #22c55e; }
+  .dot.disconnected { background: #ef4444; }
 
   main {
     flex: 1;
@@ -82,6 +86,13 @@
     margin-bottom: 4px;
   }
 
+  #typingIndicator {
+    padding: 6px 12px;
+    font-size: 14px;
+    color: #94a3b8;
+    display: none;
+  }
+
   #inputRow {
     display: flex;
     padding: 10px;
@@ -111,9 +122,7 @@
     transition: background 0.2s;
   }
 
-  #sendBtn:hover {
-    background: #2563eb;
-  }
+  #sendBtn:hover { background: #2563eb; }
 
   #replyTag {
     display:none;
@@ -131,32 +140,36 @@
     cursor:pointer;
   }
 
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: #475569;
-    border-radius: 4px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #64748b;
-  }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #64748b; }
   </style>
 </head>
-<body>
-  <header>
-    <h2>WebSocket Chat</h2>
-  </header>
 
-  <!-- ✅ Connection and Count Bar -->
+<body>
+  <!-- Sticky Header -->
+<header>
+  <h2>RealTime things </h2>
+
+  <!-- Typing Indicator (White Text) -->
+  <div id="typingIndicator" 
+       style="color: white; font-size: 14px; margin-top: 4px; min-height: 18px;">
+  </div>
+
   <div id="statusBar">
     <span id="connectionDot" class="dot disconnected"></span>
     <span id="connectionText">Disconnected ❌</span>
     <span>|</span>
-    <!-- <span>Users Online: <span id="userCount">0</span></span> -->
   </div>
+</header>
+
+
+  <!-- Sticky Status Bar -->
+  
 
   <main>
+    <!-- <div id="typingIndicator"></div> -->
+
     <div id="messages"></div>
 
     <div id="replyTag">
@@ -171,122 +184,171 @@
     </div>
   </main>
 
-  <script>
-    const messagesEl = document.getElementById('messages');
-    const nameInput = document.getElementById('nameInput');
-    const textInput = document.getElementById('textInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const replyTag = document.getElementById('replyTag');
-    const replyText = document.getElementById('replyText');
-    const connectionDot = document.getElementById('connectionDot');
-    const connectionText = document.getElementById('connectionText');
-    const userCountEl = document.getElementById('userCount');
+<script>
+const messagesEl = document.getElementById('messages');
+const nameInput = document.getElementById('nameInput');
+const textInput = document.getElementById('textInput');
+const sendBtn = document.getElementById('sendBtn');
+const replyTag = document.getElementById('replyTag');
+const replyText = document.getElementById('replyText');
+const connectionDot = document.getElementById('connectionDot');
+const connectionText = document.getElementById('connectionText');
+const typingIndicator = document.getElementById('typingIndicator');
 
-    let currentReplyId = null;
-    const messagesMap = {};
+let currentReplyId = null;
+const messagesMap = {};
 
-    const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`);
+const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`);
 
-    // ✅ Connection Open
-    ws.addEventListener('open', () => {
-      connectionDot.classList.remove('disconnected');
-      connectionDot.classList.add('connected');
-      connectionText.textContent = 'Connected ✅';
-      const name = nameInput.value.trim() || 'Anonymous';
-      ws.send(JSON.stringify({ type: 'join', name }));
-    });
+ws.addEventListener('open', () => {
+  connectionDot.classList.add('connected');
+  connectionText.textContent = 'Connected ✅';
+  ws.send(JSON.stringify({ type: 'join', name: nameInput.value || 'Anonymous' }));
+});
 
-    // ✅ Handle Messages
-    ws.addEventListener('message', (ev) => {
-      try {
-        const data = JSON.parse(ev.data);
-        if (data.type === 'message') {
-          appendMessage(`${data.name}: ${data.text}`, new Date(data.time), false, data.id, data.replyTo);
-          ws.send(JSON.stringify({ type: 'seen', id: data.id }));
-        } else if (data.type === 'system') {
-          appendMessage(`* ${data.text} *`, new Date(data.time), true);
-        } else if (data.type === 'seen') {
-          const meta = document.querySelector(`.msg[data-id="${data.id}"] .meta`);
-          if (meta && !meta.textContent.includes('✅✅')) {
-            meta.textContent += ' ✅✅';
-          }
-        } else if (data.type === 'userCount') {
-          // ✅ Update user count dynamically
-          userCountEl.textContent = data.count;
-        }
-      } catch (e) {
-        console.error('Parse error:', e);
+ws.addEventListener('message', (ev) => {
+  try {
+    const data = JSON.parse(ev.data);
+
+    if (data.type === 'message') {
+      appendMessage(`${data.name}: ${data.text}`, new Date(data.time), false, data.id, data.replyTo);
+      ws.send(JSON.stringify({ type: 'seen', id: data.id }));
+    }
+
+    else if (data.type === 'system') {
+      appendMessage(`* ${data.text} *`, new Date(data.time), true);
+    }
+
+    else if (data.type === 'seen') {
+      const meta = document.querySelector(`.msg[data-id="${data.id}"] .meta`);
+      if (meta && !meta.textContent.includes('✅✅')) {
+        meta.textContent += ' ✅✅';
       }
-    });
-
-    // ✅ Connection Closed
-    ws.addEventListener('close', () => {
-      connectionDot.classList.remove('connected');
-      connectionDot.classList.add('disconnected');
-      connectionText.textContent = 'Disconnected ❌';
-    });
-
-    // ✅ Sending messages
-    sendBtn.addEventListener('click', sendMessage);
-    textInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') sendMessage();
-    });
-
-    function sendMessage() {
-      const name = nameInput.value.trim() || 'Anonymous';
-      const text = textInput.value.trim();
-      if (!text) return;
-
-      const msg = {
-        type: 'message',
-        id: Date.now(),
-        name,
-        text,
-        replyTo: currentReplyId || null,
-      };
-
-      ws.send(JSON.stringify(msg));
-      appendMessage(`${name} (you): ${text}`, new Date(), false, msg.id, msg.replyTo);
-      textInput.value = '';
-      clearReplyTag();
     }
 
-    function appendMessage(text, time, system=false, id=null, replyTo=null) {
-      const el = document.createElement('div');
-      el.className = 'msg';
-      el.dataset.id = id;
-      const ts = time.toLocaleTimeString();
+    else if (data.type === 'typing') {
+      typingIndicator.style.display = 'block';
+      typingIndicator.textContent = `${data.name} is typing...`;
+    }
 
-      let replyHTML = '';
-      if (replyTo && messagesMap[replyTo]) {
-        replyHTML = `<div style="font-size:12px; color:#94a3b8; border-left:2px solid #3b82f6; padding-left:6px; margin-bottom:4px;">
-                       ↩️ ${messagesMap[replyTo].text.slice(0, 40)}
-                     </div>`;
+    else if (data.type === 'stopTyping') {
+      typingIndicator.style.display = 'none';
+    }
+
+    else if (data.type === 'edit') {
+      const msg = messagesMap[data.id];
+      if (msg) {
+        msg.text = data.newText;
+        msg.el.querySelector("div:last-child").innerHTML =
+          `${data.newText} <span style="color:#94a3b8">(edited)</span>`;
       }
-
-      el.innerHTML = `
-        <div class="meta">${ts}</div>
-        ${replyHTML}
-        <div>${text}</div>
-      `;
-      if (system) el.style.fontStyle = 'italic';
-      el.addEventListener('dblclick', () => showReplyTag(text, id));
-
-      messagesEl.appendChild(el);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-      messagesMap[id] = { text, el };
     }
 
-    function showReplyTag(text, id) {
-      replyText.textContent = text.slice(0, 50);
-      replyTag.style.display = 'block';
-      currentReplyId = id;
-    }
+  } catch (e) {
+    console.error('Parse error:', e);
+  }
+});
 
-    function clearReplyTag() {
-      replyTag.style.display = 'none';
-      currentReplyId = null;
-    }
-  </script>
+ws.addEventListener('close', () => {
+  connectionDot.classList.remove('connected');
+  connectionDot.classList.add('disconnected');
+  connectionText.textContent = 'Disconnected ❌';
+});
+
+sendBtn.addEventListener('click', sendMessage);
+textInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+
+function sendMessage() {
+  const name = nameInput.value.trim() || 'Anonymous';
+  const text = textInput.value.trim();
+  if (!text) return;
+
+  const id = Date.now();
+
+  const msg = { type: 'message', id, name, text, replyTo: currentReplyId || null };
+
+  ws.send(JSON.stringify(msg));
+  appendMessage(`${name} (you): ${text}`, new Date(), false, id, msg.replyTo);
+
+  textInput.value = '';
+  clearReplyTag();
+}
+
+let typingTimeout;
+let isTyping = false;
+
+textInput.addEventListener("input", () => {
+  if (!isTyping) {
+    ws.send(JSON.stringify({ type: "typing", name: nameInput.value || "Anonymous" }));
+    isTyping = true;
+  }
+
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => {
+    ws.send(JSON.stringify({ type: "stopTyping" }));
+    isTyping = false;
+  }, 1000);
+});
+
+function appendMessage(text, time, system=false, id=null, replyTo=null) {
+  const el = document.createElement('div');
+  el.className = 'msg';
+  el.dataset.id = id;
+
+  const ts = time.toLocaleTimeString();
+
+  let replyHTML = '';
+  if (replyTo && messagesMap[replyTo]) {
+    replyHTML = `
+      <div style="font-size:12px; color:#94a3b8; border-left:2px solid #3b82f6; padding-left:6px; margin-bottom:4px;">
+        ↩️ ${messagesMap[replyTo].text.slice(0, 40)}
+      </div>`;
+  }
+
+  el.innerHTML = `
+    <div class="meta">${ts}</div>
+    ${replyHTML}
+    <div>${text}</div>
+  `;
+
+  el.addEventListener("dblclick", () => {
+    if (text.includes("(you):")) editMessagePrompt(id);
+    else showReplyTag(text, id);
+  });
+
+  if (system) el.style.fontStyle = 'italic';
+
+  messagesEl.appendChild(el);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+
+  messagesMap[id] = { text, el };
+}
+
+function editMessagePrompt(id) {
+  const original = messagesMap[id].text.replace("(you): ", "");
+  const newText = prompt("Edit your message:", original);
+  if (!newText) return;
+
+  ws.send(JSON.stringify({ type: "edit", id, text: newText }));
+
+  const el = messagesMap[id].el;
+  el.querySelector("div:last-child").innerHTML =
+    `${newText} <span style='color:#94a3b8'>(edited)</span>`;
+
+  messagesMap[id].text = newText + " (you)";
+}
+
+function showReplyTag(text, id) {
+  replyText.textContent = text.slice(0, 50);
+  replyTag.style.display = 'block';
+  currentReplyId = id;
+}
+
+function clearReplyTag() {
+  replyTag.style.display = 'none';
+  currentReplyId = null;
+}
+</script>
+
 </body>
 </html>
