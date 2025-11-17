@@ -1,4 +1,4 @@
-// Minimal Node.js + Express + ws server with Seen + Reply
+// Minimal Node.js + Express + ws server with Seen + Reply + Typing + Edit
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
@@ -32,8 +32,8 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    // 📌 Normal message
     if (parsed.type === 'message') {
-      // Send to others
       broadcast(
         {
           type: 'message',
@@ -45,14 +45,52 @@ wss.on('connection', (ws) => {
         },
         ws
       );
-    } else if (parsed.type === 'join') {
+    }
+
+    // 📌 User joined
+    else if (parsed.type === 'join') {
       broadcast(
         { type: 'system', text: `${parsed.name} joined the chat.`, time: Date.now() },
         ws
       );
-    } else if (parsed.type === 'seen') {
-      // Forward seen info to everyone except sender
+    }
+
+    // 📌 Seen message
+    else if (parsed.type === 'seen') {
       broadcast({ type: 'seen', id: parsed.id }, ws);
+    }
+
+    // 📌 Typing notification
+    else if (parsed.type === 'typing') {
+      broadcast(
+        {
+          type: 'typing',
+          name: parsed.name,
+        },
+        ws
+      );
+    }
+
+    // 📌 Stop typing notification
+    else if (parsed.type === 'stopTyping') {
+      broadcast(
+        {
+          type: 'stopTyping',
+        },
+        ws
+      );
+    }
+
+    // 📌 Edit message
+    else if (parsed.type === 'edit') {
+      broadcast(
+        {
+          type: 'edit',
+          id: parsed.id,
+          newText: parsed.text,
+        },
+        ws
+      );
     }
   });
 
