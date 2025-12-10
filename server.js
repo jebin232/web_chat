@@ -1,101 +1,74 @@
-// Minimal Node.js + Express + ws server with Seen + Reply + Typing + Edit
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const path = require('path');
+const multer = require('multer');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-// Serve static client files
+// Ensure uploads directory
+const uploadDir = path.join(__dirname, 'public/uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
+});
+const upload = multer({ storage });
+
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.post('/upload', upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file' });
+  res.json({ url: `/uploads/${req.file.filename}`, type: req.file.mimetype });
+});
+
 function broadcast(data, sender) {
-  const msg = JSON.stringify(data);
-  wss.clients.forEach((client) => {
+  wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN && client !== sender) {
-      client.send(msg);
+      client.send(JSON.stringify(data));
     }
   });
 }
 
+function broadcastAll(data) {
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) client.send(JSON.stringify(data));
+  });
+}
+
 wss.on('connection', (ws) => {
-  console.log('Client connected. Count:', wss.clients.size);
+  // Update user count on connection
+  broadcastAll({ type: 'count', count: wss.clients.size });
 
   ws.on('message', (message) => {
     let parsed;
-    try {
-      parsed = JSON.parse(message);
-    } catch {
-      console.warn('Invalid message:', message);
-      return;
-    }
+    try { parsed = JSON.parse(message); } catch { return; }
 
-    // 📌 Normal message
-    if (parsed.type === 'message') {
-      broadcast(
-        {
-          type: 'message',
-          id: parsed.id,
-          name: parsed.name,
-          text: parsed.text,
-          replyTo: parsed.replyTo,
-          time: Date.now(),
-        },
-        ws
-      );
+    if (parsed.type === 'join') {
+      ws.userName = parsed.name; // Store name on the socket
+      broadcast(parsed, ws); // Tell others I joined
     }
-
-    // 📌 User joined
-    else if (parsed.type === 'join') {
-      broadcast(
-        { type: 'system', text: `${parsed.name} joined the chat.`, time: Date.now() },
-        ws
-      );
+    else if (parsed.type === 'message') {
+      broadcastAll({ ...parsed, time: Date.now() });
     }
-
-    // 📌 Seen message
-    else if (parsed.type === 'seen') {
-      broadcast({ type: 'seen', id: parsed.id }, ws);
+    else if (parsed.type === 'typing' || parsed.type === 'stopTyping') {
+      broadcast(parsed, ws); // Forward typing status to others
     }
-
-    // 📌 Typing notification
-    else if (parsed.type === 'typing') {
-      broadcast(
-        {
-          type: 'typing',
-          name: parsed.name,
-        },
-        ws
-      );
-    }
-
-    // 📌 Stop typing notification
-    else if (parsed.type === 'stopTyping') {
-      broadcast(
-        {
-          type: 'stopTyping',
-        },
-        ws
-      );
-    }
-
-    // 📌 Edit message
-    else if (parsed.type === 'edit') {
-      broadcast(
-        {
-          type: 'edit',
-          id: parsed.id,
-          newText: parsed.text,
-        },
-        ws
-      );
+    else if (parsed.type === 'delete' || parsed.type === 'edit') {
+      broadcastAll(parsed);
     }
   });
 
   ws.on('close', () => {
-    console.log('Client disconnected. Count:', wss.clients.size);
+    // Send "User Left" message
+    if (ws.userName) {
+      broadcastAll({ type: 'system', text: `${ws.userName} left`, time: Date.now() });
+    }
+    broadcastAll({ type: 'count', count: wss.clients.size });
   });
 });
 
