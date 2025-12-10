@@ -2,353 +2,351 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WebSocket Chat ✅↩️</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Chat Pro Ultra </title>
+  
   <style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    background-color: #0f172a;
-    color: #e5e7eb;
+  :root {
+    --bg-color: #0b141a;
+    --header-bg: #202c33;
+    --incoming-bg: #202c33;
+    --outgoing-bg: #005c4b;
+    --accent: #00a884;
+    --text-primary: #e9edef;
+    --text-secondary: #8696a0;
+    --system-msg-bg: #182229;
   }
 
-  /* ⭐ STICKY HEADER */
-  header {
-    background: #1e293b;
-    color: #f8fafc;
-    padding: 10px;
-    text-align: center;
-    font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-    position: sticky;
-    top: 0;
-    z-index: 999;
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg-color); color: var(--text-primary); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+  /* --- HEADER --- */
+  header { background: var(--header-bg); padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.3); z-index: 20; height: 60px; box-sizing: border-box; }
+  .user-info { display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 40px; height: 40px; background: #6b7280; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: white; }
+  
+  .header-text { display: flex; flex-direction: column; justify-content: center; }
+  .header-title { font-weight: bold; font-size: 16px; }
+  .header-subtitle { font-size: 13px; color: var(--text-secondary); transition: color 0.3s; height: 16px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}
+  .typing-anim { color: var(--accent); font-weight: bold; }
+
+  /* --- MESSAGES AREA --- */
+  main { flex: 1; overflow-y: auto; padding: 20px 5%; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-blend-mode: overlay; background-color: var(--bg-color); display: flex; flex-direction: column; gap: 6px; }
+  
+  /* System Messages (Join/Leave) */
+  .system-msg { align-self: center; background: var(--system-msg-bg); color: #8696a0; padding: 5px 12px; border-radius: 8px; font-size: 12.5px; margin: 8px 0; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.2); border: 1px solid #2a3942; }
+
+  /* Chat Bubbles */
+  .msg-row { display: flex; margin-bottom: 2px; position: relative; width: 100%; }
+  .msg-row.own { justify-content: flex-end; }
+  
+  .msg { 
+    background: var(--incoming-bg); 
+    padding: 6px 9px 8px 9px; 
+    border-radius: 8px; 
+    max-width: 75%; 
+    min-width: 80px;
+    position: relative; 
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2); 
+    font-size: 14.2px;
+    line-height: 19px;
   }
+  .msg.own { background: var(--outgoing-bg); border-top-right-radius: 0; }
+  .msg:not(.own) { border-top-left-radius: 0; }
 
-  /* ⭐ STICKY STATUS BAR */
-  #statusBar {
-    font-size: 14px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    background: #111827;
-    padding: 6px 0;
-    color: #cbd5e1;
-    position: sticky;
-    top: 52px; /* keeps it below the header */
-    z-index: 998;
-  }
+  .msg-name { font-size: 12.5px; font-weight: bold; color: #fab005; margin-bottom: 2px; display: block; cursor: pointer;}
+  .msg.own .msg-name { display: none; }
 
-  .dot {
-    height: 10px;
-    width: 10px;
-    border-radius: 50%;
-    display: inline-block;
-  }
+  .msg img { max-width: 100%; border-radius: 6px; margin-top: 4px; display: block; cursor: pointer; }
+  .msg audio { width: 220px; margin-top: 5px; }
 
-  .dot.connected { background: #22c55e; }
-  .dot.disconnected { background: #ef4444; }
+  .msg-meta { display: flex; justify-content: flex-end; align-items: center; gap: 3px; font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px; float: right; margin-left: 8px; position: relative; top: 3px;}
+  
+  /* Reply Preview */
+  .reply-preview { border-left: 4px solid var(--accent); background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px; font-size: 12px; margin-bottom: 5px; color: rgba(255,255,255,0.8); cursor: pointer; display: flex; flex-direction: column; }
 
-  main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
+  /* Context Menu */
+  .msg-menu-btn { position: absolute; top: 0; right: 0; width: 25px; height: 25px; background: linear-gradient(90deg, transparent, var(--incoming-bg) 40%); border: none; cursor: pointer; display: none; color: #8696a0; border-top-right-radius: 8px; text-align: right; padding-right: 5px;}
+  .msg.own .msg-menu-btn { background: linear-gradient(90deg, transparent, var(--outgoing-bg) 40%); }
+  .msg:hover .msg-menu-btn { display: block; }
 
-  #messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px;
-    background: #0f172a;
-  }
+  .context-menu { position: absolute; background: #233138; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 100; overflow: hidden; min-width: 150px; display: none; padding: 5px 0;}
+  .context-menu button { width: 100%; text-align: left; background: none; border: none; color: white; padding: 10px 15px; cursor: pointer; font-size: 14px; }
+  .context-menu button:hover { background: #111b21; }
 
-  .msg {
-    background: #1e293b;
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    transition: background 0.2s;
-  }
+  /* Footer */
+  #inputArea { background: var(--header-bg); padding: 8px 10px; display: flex; align-items: flex-end; gap: 8px; min-height: 50px; box-sizing: border-box;}
+  
+  .icon-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary); padding: 5px; transition: 0.2s; height: 40px; display: flex; align-items: center;}
+  .icon-btn:hover { color: var(--text-primary); }
+  
+  #textInput { flex: 1; background: #2a3942; border: none; border-radius: 8px; padding: 10px 12px; color: white; outline: none; font-size: 15px; max-height: 100px; overflow-y: auto; height: 20px; margin-bottom: 5px;}
+  
+  /* Emoji Picker */
+  #emojiPicker { position: absolute; bottom: 70px; left: 10px; background: #233138; border-radius: 8px; padding: 10px; display: none; grid-template-columns: repeat(6, 1fr); gap: 5px; height: 200px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 50; }
+  .emoji-item { cursor: pointer; font-size: 24px; padding: 5px; text-align: center; }
+  .emoji-item:hover { background: rgba(255,255,255,0.1); border-radius: 4px; }
 
-  .msg:hover {
-    background: #334155;
-  }
+  /* Reply UI */
+  #replyContainer { background: #1f2c34; padding: 8px 15px; border-left: 5px solid var(--accent); display: none; animation: slideUp 0.2s; position: absolute; bottom: 60px; width: 90%; left: 5%; border-radius: 8px; box-shadow: 0 -2px 5px rgba(0,0,0,0.2); z-index: 10; box-sizing: border-box;}
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-  .meta {
-    font-size: 12px;
-    color: #94a3b8;
-    margin-bottom: 4px;
-  }
-
-  #typingIndicator {
-    padding: 6px 12px;
-    font-size: 14px;
-    color: #94a3b8;
-    display: none;
-  }
-
-  #inputRow {
-    display: flex;
-    padding: 10px;
-    border-top: 1px solid #334155;
-    background-color: #1e293b;
-  }
-
-  #nameInput, #textInput {
-    flex: 1;
-    background: #0f172a;
-    color: #f1f5f9;
-    border: 1px solid #475569;
-    border-radius: 6px;
-    padding: 8px;
-    outline: none;
-  }
-
-  #sendBtn {
-    padding: 8px 14px;
-    margin-left: 8px;
-    cursor: pointer;
-    background: #3b82f6;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-    transition: background 0.2s;
-  }
-
-  #sendBtn:hover { background: #2563eb; }
-
-  #replyTag {
-    display:none;
-    background:#334155;
-    padding:6px 10px;
-    color:#e2e8f0;
-    font-size:14px;
-  }
-
-  #replyTag button {
-    margin-left:10px;
-    background:none;
-    border:none;
-    color:#94a3b8;
-    cursor:pointer;
-  }
-
-  ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
   </style>
 </head>
 
 <body>
-  <!-- Sticky Header -->
+
 <header>
-  <h2>RealTime things </h2>
-
-  <!-- Typing Indicator (White Text) -->
-  <div id="typingIndicator" 
-       style="color: white; font-size: 14px; margin-top: 4px; min-height: 18px;">
+  <div class="user-info">
+    <div class="avatar">👥</div>
+    <div class="header-text">
+      <div class="header-title">Chat Group</div>
+      <div id="statusText" class="header-subtitle">Connecting...</div>
+    </div>
   </div>
-
-  <div id="statusBar">
-    <span id="connectionDot" class="dot disconnected"></span>
-    <span id="connectionText">Disconnected ❌</span>
-    <span>|</span>
+  <div style="display: flex; gap:10px;">
+    <input id="nameInput" type="text" placeholder="Your Name" value="Guest" 
+           style="background:#2a3942; border:none; color:white; padding:5px; border-radius:4px; width:80px; text-align:center;">
   </div>
 </header>
 
+<main id="messages"></main>
 
-  <!-- Sticky Status Bar -->
+<div id="ctxMenu" class="context-menu">
+  <button onclick="triggerReply()">↩️ Reply</button>
+  <button id="ctxEditBtn" onclick="triggerEdit()">✏️ Edit</button>
+  <button id="ctxDeleteBtn" style="color:#ef4444" onclick="triggerDelete()">🗑️ Delete For Everyone</button>
+</div>
+
+<div id="replyContainer">
+  <div style="display:flex; justify-content:space-between; margin-bottom: 2px;">
+    <span style="color:var(--accent); font-size:12px; font-weight:bold;">Replying...</span>
+    <button onclick="cancelReply()" style="background:none;border:none;color:#8696a0;cursor:pointer;">✖</button>
+  </div>
+  <div id="replyTextDisplay" style="color:rgba(255,255,255,0.7); font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+</div>
+
+<div id="emojiPicker"></div>
+
+<div id="inputArea">
+  <button class="icon-btn" onclick="toggleEmoji()">😊</button>
+  <button class="icon-btn" onclick="document.getElementById('fileInput').click()">📎</button>
+  <input type="file" id="fileInput" hidden accept="image/*,audio/*">
   
-
-  <main>
-    <!-- <div id="typingIndicator"></div> -->
-
-    <div id="messages"></div>
-
-    <div id="replyTag">
-      Replying to: <span id="replyText"></span>
-      <button onclick="clearReplyTag()">✖</button>
-    </div>
-
-    <div id="inputRow">
-      <input id="nameInput" type="text" placeholder="Your name" />
-      <input id="textInput" type="text" placeholder="Type a message..." />
-      <button id="sendBtn">Send</button>
-    </div>
-  </main>
+  <input id="textInput" type="text" placeholder="Type a message" autocomplete="off">
+  
+  <button id="sendBtn" class="icon-btn" style="color: var(--accent); display:none;">➤</button>
+</div>
 
 <script>
+const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`);
 const messagesEl = document.getElementById('messages');
-const nameInput = document.getElementById('nameInput');
 const textInput = document.getElementById('textInput');
 const sendBtn = document.getElementById('sendBtn');
-const replyTag = document.getElementById('replyTag');
-const replyText = document.getElementById('replyText');
-const connectionDot = document.getElementById('connectionDot');
-const connectionText = document.getElementById('connectionText');
-const typingIndicator = document.getElementById('typingIndicator');
+const nameInput = document.getElementById('nameInput');
+const statusText = document.getElementById('statusText');
+const replyContainer = document.getElementById('replyContainer');
+const ctxMenu = document.getElementById('ctxMenu');
 
 let currentReplyId = null;
-const messagesMap = {};
+let selectedMsgId = null;
+let messagesMap = {};
+let typingUsers = new Set();
+let onlineCount = 0;
 
-const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`);
+// --- WEBSOCKET EVENTS ---
+ws.onopen = () => {
+  ws.send(JSON.stringify({ type: 'join', name: nameInput.value }));
+};
 
-ws.addEventListener('open', () => {
-  connectionDot.classList.add('connected');
-  connectionText.textContent = 'Connected ✅';
-  ws.send(JSON.stringify({ type: 'join', name: nameInput.value || 'Anonymous' }));
-});
+ws.onmessage = (ev) => {
+  const data = JSON.parse(ev.data);
 
-ws.addEventListener('message', (ev) => {
-  try {
-    const data = JSON.parse(ev.data);
+  if (data.type === 'message') appendMessage(data);
+  else if (data.type === 'system') appendSystemMessage(data.text);
+  else if (data.type === 'delete') removeMessageUI(data.id);
+  else if (data.type === 'edit') updateMessageUI(data.id, data.newText);
+  else if (data.type === 'count') updateStatus(data.count);
+  else if (data.type === 'typing') handleTyping(data.name, true);
+  else if (data.type === 'stopTyping') handleTyping(data.name, false);
+};
 
-    if (data.type === 'message') {
-      appendMessage(`${data.name}: ${data.text}`, new Date(data.time), false, data.id, data.replyTo);
-      ws.send(JSON.stringify({ type: 'seen', id: data.id }));
-    }
-
-    else if (data.type === 'system') {
-      appendMessage(`* ${data.text} *`, new Date(data.time), true);
-    }
-
-    else if (data.type === 'seen') {
-      const meta = document.querySelector(`.msg[data-id="${data.id}"] .meta`);
-      if (meta && !meta.textContent.includes('✅✅')) {
-        meta.textContent += ' ✅✅';
-      }
-    }
-
-    else if (data.type === 'typing') {
-      typingIndicator.style.display = 'block';
-      typingIndicator.textContent = `${data.name} is typing...`;
-    }
-
-    else if (data.type === 'stopTyping') {
-      typingIndicator.style.display = 'none';
-    }
-
-    else if (data.type === 'edit') {
-      const msg = messagesMap[data.id];
-      if (msg) {
-        msg.text = data.newText;
-        msg.el.querySelector("div:last-child").innerHTML =
-          `${data.newText} <span style="color:#94a3b8">(edited)</span>`;
-      }
-    }
-
-  } catch (e) {
-    console.error('Parse error:', e);
+// --- LOGIC: STATUS & TYPING ---
+function updateStatus(count) {
+  if (count !== undefined) onlineCount = count;
+  
+  if (typingUsers.size > 0) {
+    const names = Array.from(typingUsers).join(', ');
+    statusText.innerHTML = `<span class="typing-anim">${names} is typing...</span>`;
+  } else {
+    statusText.innerText = `${onlineCount} participants online`;
+    statusText.style.color = 'var(--text-secondary)';
   }
-});
+}
 
-ws.addEventListener('close', () => {
-  connectionDot.classList.remove('connected');
-  connectionDot.classList.add('disconnected');
-  connectionText.textContent = 'Disconnected ❌';
-});
+function handleTyping(name, isTyping) {
+  if (isTyping) typingUsers.add(name);
+  else typingUsers.delete(name);
+  updateStatus();
+}
 
-sendBtn.addEventListener('click', sendMessage);
-textInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
-
-function sendMessage() {
-  const name = nameInput.value.trim() || 'Anonymous';
+// --- LOGIC: SENDING ---
+function sendMessage(mediaUrl = null, mediaType = null) {
   const text = textInput.value.trim();
-  if (!text) return;
+  if (!text && !mediaUrl) return;
 
-  const id = Date.now();
-
-  const msg = { type: 'message', id, name, text, replyTo: currentReplyId || null };
+  const msg = {
+    type: 'message',
+    id: Date.now(),
+    name: nameInput.value,
+    text: text,
+    mediaUrl, 
+    mediaType,
+    replyTo: currentReplyId
+  };
 
   ws.send(JSON.stringify(msg));
-  appendMessage(`${name} (you): ${text}`, new Date(), false, id, msg.replyTo);
-
   textInput.value = '';
-  clearReplyTag();
+  cancelReply();
+  toggleSendButton();
 }
 
-let typingTimeout;
-let isTyping = false;
-
-textInput.addEventListener("input", () => {
-  if (!isTyping) {
-    ws.send(JSON.stringify({ type: "typing", name: nameInput.value || "Anonymous" }));
-    isTyping = true;
-  }
-
-  clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(() => {
-    ws.send(JSON.stringify({ type: "stopTyping" }));
-    isTyping = false;
-  }, 1000);
-});
-
-function appendMessage(text, time, system=false, id=null, replyTo=null) {
-  const el = document.createElement('div');
-  el.className = 'msg';
-  el.dataset.id = id;
-
-  const ts = time.toLocaleTimeString();
+// --- LOGIC: RENDERING ---
+function appendMessage(data) {
+  const isOwn = data.name === nameInput.value;
+  const row = document.createElement('div');
+  row.className = `msg-row ${isOwn ? 'own' : ''}`;
+  row.dataset.id = data.id;
 
   let replyHTML = '';
-  if (replyTo && messagesMap[replyTo]) {
-    replyHTML = `
-      <div style="font-size:12px; color:#94a3b8; border-left:2px solid #3b82f6; padding-left:6px; margin-bottom:4px;">
-        ↩️ ${messagesMap[replyTo].text.slice(0, 40)}
-      </div>`;
+  if (data.replyTo && messagesMap[data.replyTo]) {
+    const original = messagesMap[data.replyTo];
+    const previewTxt = original.mediaType ? `📷 ${original.mediaType}` : original.text;
+    replyHTML = `<div class="reply-preview"><strong>${original.name}</strong><span>${previewTxt}</span></div>`;
   }
 
-  el.innerHTML = `
-    <div class="meta">${ts}</div>
-    ${replyHTML}
-    <div>${text}</div>
+  let contentHTML = data.text ? `<span>${data.text}</span>` : '';
+  if (data.mediaType === 'image') contentHTML += `<img src="${data.mediaUrl}">`;
+  if (data.mediaType === 'audio') contentHTML += `<br><audio controls src="${data.mediaUrl}"></audio>`;
+
+  const time = new Date(data.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+  row.innerHTML = `
+    <div class="msg ${isOwn ? 'own' : ''}">
+      <button class="msg-menu-btn" onclick="openCtxMenu(event, ${data.id}, ${isOwn})">⌵</button>
+      ${!isOwn ? `<span class="msg-name">${data.name}</span>` : ''}
+      ${replyHTML}
+      <div class="msg-content">${contentHTML}</div>
+      <div class="msg-meta">
+        <span>${time}</span>
+        ${isOwn ? '<span style="color:#53bdeb">✓✓</span>' : ''}
+      </div>
+    </div>
   `;
 
-  el.addEventListener("dblclick", () => {
-    if (text.includes("(you):")) editMessagePrompt(id);
-    else showReplyTag(text, id);
-  });
+  messagesEl.appendChild(row);
+  scrollToBottom();
+  messagesMap[data.id] = data;
+}
 
-  if (system) el.style.fontStyle = 'italic';
-
+function appendSystemMessage(text) {
+  const el = document.createElement('div');
+  el.className = 'system-msg';
+  el.innerText = text;
   messagesEl.appendChild(el);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-
-  messagesMap[id] = { text, el };
+  scrollToBottom();
 }
 
-function editMessagePrompt(id) {
-  const original = messagesMap[id].text.replace("(you): ", "");
-  const newText = prompt("Edit your message:", original);
-  if (!newText) return;
-
-  ws.send(JSON.stringify({ type: "edit", id, text: newText }));
-
-  const el = messagesMap[id].el;
-  el.querySelector("div:last-child").innerHTML =
-    `${newText} <span style='color:#94a3b8'>(edited)</span>`;
-
-  messagesMap[id].text = newText + " (you)";
+function removeMessageUI(id) {
+  const el = document.querySelector(`.msg-row[data-id="${id}"] .msg-content`);
+  if (el) {
+    el.innerHTML = `<i style="color: #8696a0; font-size:13px;">🚫 This message was deleted</i>`;
+    // Remove image if exists
+    const img = el.parentNode.querySelector('img');
+    if(img) img.remove();
+  }
 }
 
-function showReplyTag(text, id) {
-  replyText.textContent = text.slice(0, 50);
-  replyTag.style.display = 'block';
-  currentReplyId = id;
+// --- UTILS & HANDLERS ---
+function scrollToBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
+
+let typingTimeout;
+textInput.addEventListener('input', () => {
+  ws.send(JSON.stringify({ type: 'typing', name: nameInput.value }));
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => ws.send(JSON.stringify({ type: 'stopTyping', name: nameInput.value })), 1000);
+  toggleSendButton();
+});
+
+textInput.addEventListener('keydown', e => { if(e.key === 'Enter') sendMessage(); });
+sendBtn.onclick = () => sendMessage();
+
+function toggleSendButton() {
+  sendBtn.style.display = textInput.value.trim() ? 'block' : 'none';
 }
 
-function clearReplyTag() {
-  replyTag.style.display = 'none';
+// --- CONTEXT MENU ---
+function openCtxMenu(e, id, isOwn) {
+  e.stopPropagation();
+  selectedMsgId = id;
+  const menu = document.getElementById('ctxMenu');
+  
+  // Only show Delete/Edit if it's your own message
+  document.getElementById('ctxEditBtn').style.display = isOwn ? 'block' : 'none';
+  document.getElementById('ctxDeleteBtn').style.display = isOwn ? 'block' : 'none';
+
+  const rect = e.target.getBoundingClientRect();
+  menu.style.top = `${rect.bottom}px`;
+  menu.style.left = isOwn ? 'auto' : `${rect.left}px`;
+  menu.style.right = isOwn ? '20px' : 'auto';
+  menu.style.display = 'block';
+}
+
+window.onclick = () => ctxMenu.style.display = 'none';
+
+function triggerDelete() { 
+  ws.send(JSON.stringify({ type: 'delete', id: selectedMsgId })); 
+}
+
+function triggerReply() {
+  currentReplyId = selectedMsgId;
+  const msg = messagesMap[selectedMsgId];
+  document.getElementById('replyTextDisplay').innerText = msg.text || (msg.mediaType ? '📷 Media' : '...');
+  replyContainer.style.display = 'block';
+  textInput.focus();
+}
+
+function cancelReply() {
   currentReplyId = null;
+  replyContainer.style.display = 'none';
 }
-</script>
 
+// --- FILE UPLOAD ---
+document.getElementById('fileInput').addEventListener('change', async function() {
+  const file = this.files[0];
+  if (!file) return;
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const res = await fetch('/upload', { method: 'POST', body: formData });
+  const data = await res.json();
+  if (data.url) sendMessage(data.url, file.type.startsWith('image') ? 'image' : 'file');
+});
+
+// --- EMOJIS ---
+const emojis = ["😀","😂","😍","🥺","😎","😭","😡","👍","👎","🎉","🔥","❤️","💔","👀"];
+const picker = document.getElementById('emojiPicker');
+emojis.forEach(e => {
+  const s = document.createElement('span');
+  s.className = 'emoji-item';
+  s.innerText = e;
+  s.onclick = () => { textInput.value += e; toggleSendButton(); };
+  picker.appendChild(s);
+});
+function toggleEmoji() { picker.style.display = picker.style.display === 'grid' ? 'none' : 'grid'; }
+
+</script>
 </body>
 </html>
