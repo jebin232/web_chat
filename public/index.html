@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Chat Pro</title>
+  <title>Chat Pro Ultra 💎</title>
   
   <style>
   :root {
@@ -21,41 +21,45 @@
 
   /* --- HEADER --- */
   header { background: var(--header-bg); padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.3); z-index: 20; height: 60px; box-sizing: border-box; }
-  .user-info { display: flex; align-items: center; gap: 12px; }
-  .avatar { width: 40px; height: 40px; background: #6b7280; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: white; }
+  
+  .user-info { display: flex; align-items: center; gap: 12px; flex: 1; }
+  .avatar { width: 40px; height: 40px; background: #6b7280; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: white; cursor: default; }
   
   .header-text { display: flex; flex-direction: column; justify-content: center; }
-  
-  /* NEW: Connection Indicator */
   .header-title-row { display: flex; align-items: center; gap: 8px; }
-  .header-title { font-weight: bold; font-size: 16px; }
+  .header-title { font-weight: bold; font-size: 16px; white-space: nowrap;}
+  
+  .room-badge { font-size: 10px; background: #374151; padding: 2px 6px; border-radius: 4px; color: #aebac1; border: 1px solid #4b5563; white-space: nowrap; }
+  
   .conn-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; transition: background 0.3s ease; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
-  .conn-dot.online { background: #22c55e; box-shadow: 0 0 8px #22c55e; } /* Green */
-  .conn-dot.offline { background: #ef4444; box-shadow: 0 0 8px #ef4444; } /* Red */
+  .conn-dot.online { background: #22c55e; box-shadow: 0 0 8px #22c55e; } 
+  .conn-dot.offline { background: #ef4444; box-shadow: 0 0 8px #ef4444; } 
 
-  .header-subtitle { font-size: 13px; color: var(--text-secondary); transition: color 0.3s; height: 16px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}
+  .header-subtitle { font-size: 13px; color: var(--text-secondary); height: 16px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 200px; }
   .typing-anim { color: var(--accent); font-weight: bold; }
+
+  /* Controls Area */
+  .controls-area { display: flex; align-items: center; gap: 8px; }
+
+  #nameInput { background: #2a3942; border: 1px solid #374151; color: white; padding: 6px 10px; border-radius: 6px; width: 80px; text-align: center; outline: none; font-weight: bold; font-size: 13px; transition: 0.2s; }
+  #nameInput:focus { border-color: var(--accent); }
+
+  /* Buttons */
+  .private-btn { background: #1f2c34; border: 1px solid var(--accent); color: var(--accent); padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: 0.2s; white-space: nowrap; font-weight: bold; }
+  .private-btn:hover { background: var(--accent); color: white; }
+
+  .leave-btn { background: #3f1818; border: 1px solid #ef4444; color: #ef4444; padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: 0.2s; white-space: nowrap; font-weight: bold; display: none; }
+  .leave-btn:hover { background: #ef4444; color: white; }
 
   /* --- MESSAGES AREA --- */
   main { flex: 1; overflow-y: auto; padding: 20px 5%; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-blend-mode: overlay; background-color: var(--bg-color); display: flex; flex-direction: column; gap: 6px; }
   
   .system-msg { align-self: center; background: var(--system-msg-bg); color: #8696a0; padding: 5px 12px; border-radius: 8px; font-size: 12.5px; margin: 8px 0; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.2); border: 1px solid #2a3942; }
 
-  /* Chat Bubbles */
   .msg-row { display: flex; margin-bottom: 2px; position: relative; width: 100%; }
   .msg-row.own { justify-content: flex-end; }
   
-  .msg { 
-    background: var(--incoming-bg); 
-    padding: 6px 9px 8px 9px; 
-    border-radius: 8px; 
-    max-width: 75%; 
-    min-width: 80px;
-    position: relative; 
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2); 
-    font-size: 14.2px;
-    line-height: 19px;
-  }
+  .msg { background: var(--incoming-bg); padding: 6px 9px 8px 9px; border-radius: 8px; max-width: 75%; min-width: 80px; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.2); font-size: 14.2px; line-height: 19px; }
   .msg.own { background: var(--outgoing-bg); border-top-right-radius: 0; }
   .msg:not(.own) { border-top-left-radius: 0; }
 
@@ -63,7 +67,7 @@
   .msg.own .msg-name { display: none; }
 
   .msg img { max-width: 100%; border-radius: 6px; margin-top: 4px; display: block; cursor: pointer; }
-  .msg audio { width: 220px; margin-top: 5px; }
+  .msg audio { width: 200px; margin-top: 5px; height: 40px; }
 
   .msg-meta { display: flex; justify-content: flex-end; align-items: center; gap: 3px; font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px; float: right; margin-left: 8px; position: relative; top: 3px;}
   
@@ -77,26 +81,43 @@
   .context-menu button { width: 100%; text-align: left; background: none; border: none; color: white; padding: 10px 15px; cursor: pointer; font-size: 14px; }
   .context-menu button:hover { background: #111b21; }
 
-  /* Footer */
+  /* Footer & Inputs */
   #inputArea { background: var(--header-bg); padding: 8px 10px; display: flex; align-items: flex-end; gap: 8px; min-height: 50px; box-sizing: border-box;}
   
   .icon-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary); padding: 5px; transition: 0.2s; height: 40px; display: flex; align-items: center;}
   .icon-btn:hover { color: var(--text-primary); }
   
   #textInput { flex: 1; background: #2a3942; border: none; border-radius: 8px; padding: 10px 12px; color: white; outline: none; font-size: 15px; max-height: 100px; overflow-y: auto; height: 20px; margin-bottom: 5px;}
-  /* Disabled state for offline */
   #textInput:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* Voice Recorder UI */
+  #recordingUI { display: none; flex: 1; align-items: center; justify-content: space-between; background: #2a3942; padding: 0 15px; border-radius: 8px; height: 40px; margin-bottom: 5px; color: #ef4444; font-weight: bold; }
+  .pulse { animation: pulse 1s infinite; }
+  @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
   
-  /* Emoji Picker */
   #emojiPicker { position: absolute; bottom: 70px; left: 10px; background: #233138; border-radius: 8px; padding: 10px; display: none; grid-template-columns: repeat(6, 1fr); gap: 5px; height: 200px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 50; }
   .emoji-item { cursor: pointer; font-size: 24px; padding: 5px; text-align: center; }
-  .emoji-item:hover { background: rgba(255,255,255,0.1); border-radius: 4px; }
+  
+  #replyContainer { background: #1f2c34; padding: 8px 15px; border-left: 5px solid var(--accent); display: none; position: absolute; bottom: 60px; width: 90%; left: 5%; border-radius: 8px; z-index: 10; box-sizing: border-box;}
 
-  /* Reply UI */
-  #replyContainer { background: #1f2c34; padding: 8px 15px; border-left: 5px solid var(--accent); display: none; animation: slideUp 0.2s; position: absolute; bottom: 60px; width: 90%; left: 5%; border-radius: 8px; box-shadow: 0 -2px 5px rgba(0,0,0,0.2); z-index: 10; box-sizing: border-box;}
-  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  /* --- MODAL (Room Selection) --- */
+  #roomModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+  .modal-content { background: #202c33; padding: 25px; border-radius: 12px; width: 300px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #374151; }
+  .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; color: var(--text-primary); }
+  .modal-btn { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.2s; }
+  
+  .btn-enter { background: var(--accent); color: white; }
+  .btn-cancel { background: transparent; color: #ef4444; margin-top: 10px; }
+  
+  .room-input { width: 90%; padding: 10px; background: #0b141a; border: 1px solid #374151; border-radius: 8px; color: white; margin-bottom: 15px; outline: none; text-align: center; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; }
+  .room-input:focus { border-color: var(--accent); }
 
-  /* Scrollbar */
+  /* Mobile Tweaks */
+  @media (max-width: 400px) {
+    .header-title { display: none; } 
+    #nameInput { width: 60px; }
+  }
+
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
   </style>
@@ -104,20 +125,37 @@
 
 <body>
 
+<div id="roomModal">
+  <div class="modal-content">
+    <div class="modal-title">🔒 Private Chat</div>
+    <p style="color:#8696a0; font-size:13px; margin-bottom:15px;">Enter a Room Code to Create or Join a room.</p>
+    
+    <input id="roomInput" type="text" class="room-input" placeholder="e.g. MYROOM123">
+    
+    <button class="modal-btn btn-enter" onclick="submitRoom()">🚀 Create / Join Room</button>
+    <button class="modal-btn btn-cancel" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
 <header>
   <div class="user-info">
     <div class="avatar">👥</div>
     <div class="header-text">
       <div class="header-title-row">
         <div class="header-title">Chat Group</div>
+        <span id="roomBadge" class="room-badge">Global</span>
         <span id="connDot" class="conn-dot offline"></span>
       </div>
       <div id="statusText" class="header-subtitle">Connecting...</div>
     </div>
   </div>
-  <div style="display: flex; gap:10px;">
-    <input id="nameInput" type="text" placeholder="Your Name" value="Guest" 
-           style="background:#2a3942; border:none; color:white; padding:5px; border-radius:4px; width:80px; text-align:center;">
+
+  <div class="controls-area">
+    <input id="nameInput" type="text" placeholder="Name" value="Guest">
+    
+    <button id="privateBtn" class="private-btn" onclick="openModal()">🔒 Private</button>
+    
+    <button id="leaveBtn" class="leave-btn" onclick="leaveRoom()">🚪 Exit</button>
   </div>
 </header>
 
@@ -146,6 +184,15 @@
   
   <input id="textInput" type="text" placeholder="Type a message" autocomplete="off" disabled>
   
+  <div id="recordingUI">
+    <span class="pulse">🔴 Recording...</span>
+    <div>
+      <button class="icon-btn" onclick="cancelRecording()" style="color:#ef4444; font-size: 20px;">✖</button>
+      <button class="icon-btn" onclick="finishRecording()" style="color:#22c55e; font-size: 20px;">✔</button>
+    </div>
+  </div>
+
+  <button id="micBtn" class="icon-btn" onclick="startRecording()">🎤</button>
   <button id="sendBtn" class="icon-btn" style="color: var(--accent); display:none;">➤</button>
 </div>
 
@@ -154,21 +201,30 @@ const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${l
 const messagesEl = document.getElementById('messages');
 const textInput = document.getElementById('textInput');
 const sendBtn = document.getElementById('sendBtn');
-const nameInput = document.getElementById('nameInput');
+const micBtn = document.getElementById('micBtn');
 const statusText = document.getElementById('statusText');
-const connDot = document.getElementById('connDot'); // Status Dot
+const connDot = document.getElementById('connDot');
 const replyContainer = document.getElementById('replyContainer');
-const ctxMenu = document.getElementById('ctxMenu');
+const roomModal = document.getElementById('roomModal');
+const roomBadge = document.getElementById('roomBadge');
+const recordingUI = document.getElementById('recordingUI');
+const nameInput = document.getElementById('nameInput');
+
+const privateBtn = document.getElementById('privateBtn');
+const leaveBtn = document.getElementById('leaveBtn');
 
 let currentReplyId = null;
 let selectedMsgId = null;
 let messagesMap = {};
 let typingUsers = new Set();
-let onlineCount = 0;
+let currentRoom = "global";
+
+// Voice Vars
+let mediaRecorder;
+let audioChunks = [];
 
 // --- WEBSOCKET EVENTS ---
 ws.onopen = () => {
-  // SET ONLINE STATUS
   connDot.className = "conn-dot online";
   textInput.disabled = false;
   textInput.placeholder = "Type a message";
@@ -176,17 +232,14 @@ ws.onopen = () => {
 };
 
 ws.onclose = () => {
-  // SET OFFLINE STATUS
   connDot.className = "conn-dot offline";
   statusText.innerText = "Offline (Connection Lost) 🔴";
   statusText.style.color = "#ef4444";
   textInput.disabled = true;
-  textInput.placeholder = "Connecting...";
 };
 
 ws.onmessage = (ev) => {
   const data = JSON.parse(ev.data);
-
   if (data.type === 'message') appendMessage(data);
   else if (data.type === 'system') appendSystemMessage(data.text);
   else if (data.type === 'delete') removeMessageUI(data.id);
@@ -196,26 +249,122 @@ ws.onmessage = (ev) => {
   else if (data.type === 'stopTyping') handleTyping(data.name, false);
 };
 
-// --- LOGIC: STATUS & TYPING ---
-function updateStatus(count) {
-  if (count !== undefined) onlineCount = count;
+// --- ROOM LOGIC ---
+function openModal() { roomModal.style.display = "flex"; document.getElementById('roomInput').focus(); }
+function closeModal() { roomModal.style.display = "none"; }
+
+function submitRoom() {
+  const id = document.getElementById('roomInput').value.trim().toUpperCase();
+  if(!id) return alert("Please enter a room code!");
+  joinRoom(id);
+}
+
+function leaveRoom() {
+  if(confirm("Are you sure you want to leave this room?")) {
+    joinRoom('global');
+  }
+}
+
+function joinRoom(roomId) {
+  currentRoom = roomId;
+  messagesEl.innerHTML = ''; 
+  messagesMap = {}; 
   
-  if (typingUsers.size > 0) {
-    const names = Array.from(typingUsers).join(', ');
-    statusText.innerHTML = `<span class="typing-anim">${names} is typing...</span>`;
+  // UI Updates based on Room
+  if (roomId === 'global') {
+    roomBadge.innerText = 'Global';
+    document.querySelector('.header-title').innerText = 'Chat Group';
+    leaveBtn.style.display = 'none';
+    privateBtn.style.display = 'block';
   } else {
-    statusText.innerText = `${onlineCount} participants online`;
+    roomBadge.innerText = `ID: ${roomId}`;
+    document.querySelector('.header-title').innerText = 'Private Chat';
+    leaveBtn.style.display = 'block';
+    privateBtn.style.display = 'none';
+  }
+  
+  ws.send(JSON.stringify({ type: 'joinRoom', roomId: roomId }));
+  
+  if (roomId !== 'global') {
+    appendSystemMessage(`You joined room: ${roomId}`);
+    appendSystemMessage(`Share code "${roomId}" with friends to chat!`);
+  } else {
+    appendSystemMessage(`You joined Global Chat`);
+  }
+  
+  closeModal();
+}
+
+// --- VOICE RECORDING LOGIC ---
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.start();
+
+    textInput.style.display = 'none';
+    recordingUI.style.display = 'flex';
+    micBtn.style.display = 'none';
+  } catch (err) {
+    alert("Microphone access needed!");
+    console.error(err);
+  }
+}
+
+function cancelRecording() {
+  if(mediaRecorder) {
+    mediaRecorder.stop();
+    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+  }
+  resetInputUI();
+}
+
+function finishRecording() {
+  if (!mediaRecorder) return;
+  mediaRecorder.stop();
+  mediaRecorder.stream.getTracks().forEach(track => track.stop());
+  
+  mediaRecorder.onstop = async () => {
+    const blob = new Blob(audioChunks, { type: 'audio/webm' });
+    resetInputUI();
+    
+    const formData = new FormData();
+    formData.append('file', blob, 'voice-note.webm');
+    
+    appendSystemMessage("Sending audio...");
+    try {
+      const res = await fetch('/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if(data.url) sendMessage(data.url, 'audio');
+    } catch(e) { console.error(e); }
+  };
+}
+
+function resetInputUI() {
+  textInput.style.display = 'block';
+  recordingUI.style.display = 'none';
+  micBtn.style.display = 'block';
+  sendBtn.style.display = 'none';
+}
+
+// --- STANDARD CHAT LOGIC ---
+function updateStatus(count) {
+  if (typingUsers.size > 0) {
+    statusText.innerHTML = `<span class="typing-anim">${Array.from(typingUsers).join(', ')} typing...</span>`;
+  } else {
+    statusText.innerText = `${count} participants`;
     statusText.style.color = 'var(--text-secondary)';
   }
 }
 
 function handleTyping(name, isTyping) {
-  if (isTyping) typingUsers.add(name);
-  else typingUsers.delete(name);
+  if (isTyping) typingUsers.add(name); else typingUsers.delete(name);
   updateStatus();
 }
 
-// --- LOGIC: SENDING ---
 function sendMessage(mediaUrl = null, mediaType = null) {
   const text = textInput.value.trim();
   if (!text && !mediaUrl) return;
@@ -236,7 +385,6 @@ function sendMessage(mediaUrl = null, mediaType = null) {
   toggleSendButton();
 }
 
-// --- LOGIC: RENDERING ---
 function appendMessage(data) {
   const isOwn = data.name === nameInput.value;
   const row = document.createElement('div');
@@ -254,8 +402,6 @@ function appendMessage(data) {
   if (data.mediaType === 'image') contentHTML += `<img src="${data.mediaUrl}">`;
   if (data.mediaType === 'audio') contentHTML += `<br><audio controls src="${data.mediaUrl}"></audio>`;
 
-  const time = new Date(data.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-
   row.innerHTML = `
     <div class="msg ${isOwn ? 'own' : ''}">
       <button class="msg-menu-btn" onclick="openCtxMenu(event, ${data.id}, ${isOwn})">⌵</button>
@@ -263,14 +409,13 @@ function appendMessage(data) {
       ${replyHTML}
       <div class="msg-content">${contentHTML}</div>
       <div class="msg-meta">
-        <span>${time}</span>
+        <span>${new Date(data.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
         ${isOwn ? '<span style="color:#53bdeb">✓✓</span>' : ''}
       </div>
     </div>
   `;
-
   messagesEl.appendChild(row);
-  scrollToBottom();
+  messagesEl.scrollTop = messagesEl.scrollHeight;
   messagesMap[data.id] = data;
 }
 
@@ -279,33 +424,15 @@ function appendSystemMessage(text) {
   el.className = 'system-msg';
   el.innerText = text;
   messagesEl.appendChild(el);
-  scrollToBottom();
+  messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-function removeMessageUI(id) {
-  const el = document.querySelector(`.msg-row[data-id="${id}"] .msg-content`);
-  if (el) {
-    el.innerHTML = `<i style="color: #8696a0; font-size:13px;">🚫 This message was deleted</i>`;
-    const img = el.parentNode.querySelector('img');
-    if(img) img.remove();
-  }
-}
-
-function updateMessageUI(id, newText) {
-    const el = document.querySelector(`.msg-row[data-id="${id}"] .msg-content`);
-    if(el) el.innerText = newText;
-}
-
-// --- UTILS & HANDLERS ---
-function scrollToBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
-
+// --- UTILS ---
 let typingTimeout;
 textInput.addEventListener('input', () => {
-  if (ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: 'typing', name: nameInput.value }));
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => ws.send(JSON.stringify({ type: 'stopTyping', name: nameInput.value })), 1000);
-  }
+  ws.send(JSON.stringify({ type: 'typing', name: nameInput.value }));
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => ws.send(JSON.stringify({ type: 'stopTyping', name: nameInput.value })), 1000);
   toggleSendButton();
 });
 
@@ -313,41 +440,33 @@ textInput.addEventListener('keydown', e => { if(e.key === 'Enter') sendMessage()
 sendBtn.onclick = () => sendMessage();
 
 function toggleSendButton() {
-  sendBtn.style.display = textInput.value.trim() ? 'block' : 'none';
+  const hasText = textInput.value.trim().length > 0;
+  sendBtn.style.display = hasText ? 'block' : 'none';
+  micBtn.style.display = hasText ? 'none' : 'block';
 }
 
-// --- CONTEXT MENU ---
+// --- CONTEXT MENU & EXTRAS ---
+const ctxMenu = document.getElementById('ctxMenu');
 function openCtxMenu(e, id, isOwn) {
   e.stopPropagation();
   selectedMsgId = id;
-  const menu = document.getElementById('ctxMenu');
-  
+  const menu = ctxMenu;
   document.getElementById('ctxEditBtn').style.display = isOwn ? 'block' : 'none';
   document.getElementById('ctxDeleteBtn').style.display = isOwn ? 'block' : 'none';
-
   const rect = e.target.getBoundingClientRect();
   menu.style.top = `${rect.bottom}px`;
   menu.style.left = isOwn ? 'auto' : `${rect.left}px`;
   menu.style.right = isOwn ? '20px' : 'auto';
   menu.style.display = 'block';
 }
-
 window.onclick = () => ctxMenu.style.display = 'none';
 
-function triggerDelete() { 
-  ws.send(JSON.stringify({ type: 'delete', id: selectedMsgId })); 
-}
-
+function triggerDelete() { ws.send(JSON.stringify({ type: 'delete', id: selectedMsgId })); }
 function triggerEdit() {
-    const msg = messagesMap[selectedMsgId];
-    if(msg) {
-        const newText = prompt("Edit message:", msg.text);
-        if(newText && newText !== msg.text) {
-             ws.send(JSON.stringify({ type: 'edit', id: selectedMsgId, text: newText }));
-        }
-    }
+  const msg = messagesMap[selectedMsgId];
+  const newText = prompt("Edit message:", msg.text);
+  if(newText && newText !== msg.text) ws.send(JSON.stringify({ type: 'edit', id: selectedMsgId, text: newText }));
 }
-
 function triggerReply() {
   currentReplyId = selectedMsgId;
   const msg = messagesMap[selectedMsgId];
@@ -355,36 +474,33 @@ function triggerReply() {
   replyContainer.style.display = 'block';
   textInput.focus();
 }
-
-function cancelReply() {
-  currentReplyId = null;
-  replyContainer.style.display = 'none';
+function cancelReply() { currentReplyId = null; replyContainer.style.display = 'none'; }
+function removeMessageUI(id) {
+  const el = document.querySelector(`.msg-row[data-id="${id}"] .msg-content`);
+  if(el) { el.innerHTML = `<i style="color:#8696a0;font-size:13px;">🚫 Deleted</i>`; el.parentNode.querySelector('img')?.remove(); }
+}
+function updateMessageUI(id, newText) {
+  const el = document.querySelector(`.msg-row[data-id="${id}"] .msg-content`);
+  if(el) el.innerText = newText;
 }
 
-// --- FILE UPLOAD ---
 document.getElementById('fileInput').addEventListener('change', async function() {
   const file = this.files[0];
   if (!file) return;
   const formData = new FormData();
   formData.append('file', file);
-  
   const res = await fetch('/upload', { method: 'POST', body: formData });
   const data = await res.json();
   if (data.url) sendMessage(data.url, file.type.startsWith('image') ? 'image' : 'file');
 });
 
-// --- EMOJIS ---
-const emojis = ["😀","😂","😍","🥺","😎","😭","😡","👍","👎","🎉","🔥","❤️","💔","👀"];
 const picker = document.getElementById('emojiPicker');
-emojis.forEach(e => {
-  const s = document.createElement('span');
-  s.className = 'emoji-item';
-  s.innerText = e;
+["😀","😂","😍","🥺","😎","😭","😡","👍","👎","🎉","🔥","❤️","💔"].forEach(e => {
+  const s = document.createElement('span'); s.className = 'emoji-item'; s.innerText = e;
   s.onclick = () => { textInput.value += e; toggleSendButton(); };
   picker.appendChild(s);
 });
 function toggleEmoji() { picker.style.display = picker.style.display === 'grid' ? 'none' : 'grid'; }
-
 </script>
 </body>
 </html>
