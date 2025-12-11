@@ -26,49 +26,90 @@ app.post('/upload', upload.single('file'), (req, res) => {
   res.json({ url: `/uploads/${req.file.filename}`, type: req.file.mimetype });
 });
 
+// Helper: Broadcast to everyone in the same room as the sender (excluding sender)
 function broadcast(data, sender) {
   wss.clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN && client !== sender) {
+    if (client.readyState === WebSocket.OPEN && client !== sender && client.roomId === sender.roomId) {
       client.send(JSON.stringify(data));
     }
   });
 }
 
-function broadcastAll(data) {
+// Helper: Broadcast to everyone in a specific room (including sender)
+function broadcastRoom(data, roomId) {
   wss.clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) client.send(JSON.stringify(data));
+    if (client.readyState === WebSocket.OPEN && client.roomId === roomId) {
+      client.send(JSON.stringify(data));
+    }
   });
 }
 
+// Helper: Get count of users in a specific room
+function getRoomCount(roomId) {
+  let count = 0;
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN && client.roomId === roomId) count++;
+  });
+  return count;
+}
+
 wss.on('connection', (ws) => {
-  // Update user count on connection
-  broadcastAll({ type: 'count', count: wss.clients.size });
+  // Default room is 'global'
+  ws.roomId = 'global';
+  
+  // Update count for global room initially
+  broadcastRoom({ type: 'count', count: getRoomCount('global') }, 'global');
 
   ws.on('message', (message) => {
     let parsed;
     try { parsed = JSON.parse(message); } catch { return; }
 
+    // 📌 JOIN SYSTEM (Global or Room)
     if (parsed.type === 'join') {
-      ws.userName = parsed.name; // Store name on the socket
-      broadcast(parsed, ws); // Tell others I joined
+      ws.userName = parsed.name;
+      broadcast({ type: 'system', text: `${ws.userName} joined the chat` }, ws);
     }
+
+    // 📌 SWITCH ROOMS
+    else if (parsed.type === 'joinRoom') {
+      const oldRoom = ws.roomId;
+      const newRoom = parsed.roomId;
+      
+      // Notify old room user left
+      if(ws.userName) {
+        broadcastRoom({ type: 'system', text: `${ws.userName} left the room` }, oldRoom);
+        broadcastRoom({ type: 'count', count: getRoomCount(oldRoom) - 1 }, oldRoom); // -1 because this socket is leaving
+      }
+
+      // Update Socket Data
+      ws.roomId = newRoom;
+
+      // Notify new room user joined
+      broadcastRoom({ type: 'system', text: `${ws.userName || 'Someone'} joined the room` }, newRoom);
+      broadcastRoom({ type: 'count', count: getRoomCount(newRoom) }, newRoom);
+    }
+
+    // 📌 MESSAGES
     else if (parsed.type === 'message') {
-      broadcastAll({ ...parsed, time: Date.now() });
+      broadcastRoom({ ...parsed, time: Date.now() }, ws.roomId);
     }
+
+    // 📌 TYPING / STOP TYPING
     else if (parsed.type === 'typing' || parsed.type === 'stopTyping') {
-      broadcast(parsed, ws); // Forward typing status to others
+      broadcast(parsed, ws);
     }
+
+    // 📌 ACTIONS
     else if (parsed.type === 'delete' || parsed.type === 'edit') {
-      broadcastAll(parsed);
+      broadcastRoom(parsed, ws.roomId);
     }
   });
 
   ws.on('close', () => {
-    // Send "User Left" message
     if (ws.userName) {
-      broadcastAll({ type: 'system', text: `${ws.userName} left`, time: Date.now() });
+      broadcastRoom({ type: 'system', text: `${ws.userName} left`, time: Date.now() }, ws.roomId);
     }
-    broadcastAll({ type: 'count', count: wss.clients.size });
+    broadcastRoom({ type: 'count', count: getRoomCount(ws.roomId) }, ws.roomId);
   });
 });
 
