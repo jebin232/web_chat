@@ -97,6 +97,6 @@ The application communicates via JSON payloads over WebSockets.
 * **Storage:** Images and audio are stored locally in `public/uploads`.
 * **Persistence:** This demo uses in-memory storage for active sessions. If you restart the server, the chat history resets (though uploaded files remain in the folder).
 
-## 📄 License
+## 📄 License new update 
 
 This project is open-source and free to use.
